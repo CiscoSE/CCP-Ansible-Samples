@@ -1,0 +1,2 @@
+name,kubernetes_version,description,datacenter,cluster,resource_pool,networks,datastore,storage_class,ssh_user
+API-Cluster,1.12.3,Cluster created via API,CCP,CCP,CCP/Resources,VMNetwork,CCPDatastore,vsphere,ccpuser

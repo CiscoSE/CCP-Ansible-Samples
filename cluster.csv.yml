@@ -1,0 +1,4 @@
+raw_data:
+- {cluster: CCP, datacenter: CCP, datastore: CCPDatastore, description: Cluster created
+    via API, kubernetes_version: 1.12.3, name: API-Cluster, networks: VMNetwork, resource_pool: CCP/Resources,
+  ssh_user: ccpuser, storage_class: vsphere}

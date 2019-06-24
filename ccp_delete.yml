@@ -1,0 +1,71 @@
+---
+- name: Add New Cluster
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: parse csv and make vars file
+    command: "python parse_csv.py cluster.csv"
+
+- name: Configure New Cluster and Apps
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    workers: 1
+
+  tasks:
+  - name: Load Password
+    include_vars: vars/password.yml
+  - name: Load Variables
+    include_vars:
+      file: cluster.csv.yml
+      name: input
+
+
+
+  - name: Get Token
+    shell: "curl -i -k -X POST --header 'Content-Type: application/x-www-form-urlencoded' --header 'Accept: application/json' -d 'username={{username}}&password={{password}}' 'https://{{inventory_hostname}}/2/system/login'"
+    register: token
+  - name: Print TOKEN
+    debug:
+      msg:
+        - "{{token.stdout_lines[6].split()[1]}}"
+
+  - name: Get Cluster ID
+    uri:
+        url: "https://{{inventory_hostname}}/2/clusters"
+        method: GET
+        headers:
+          Content-Type: "application/json"
+          x-auth-token: "{{token.stdout_lines[6].split()[1]}}"
+        return_content: yes
+        validate_certs: no
+        status_code: 200, -1
+    # And don't validate the server cert as it's self-signed for non-prod.
+    register: response
+    loop: "{{ input.raw_data }}"
+
+  - name: print response
+    debug:
+      msg:
+        - "{{response.results[0].json[1].uuid}}"
+
+
+  - name: Delete Cluster
+    uri:
+        url: "https://{{inventory_hostname}}/2/clusters/{{response.results[0].json[1].uuid}}"
+        method: DELETE
+        headers:
+          Content-Type: "application/json"
+          x-auth-token: "{{token.stdout_lines[6].split()[1]}}"
+        return_content: yes
+        validate_certs: no
+        status_code: 200, 204
+        # And don't validate the server cert as it's self-signed for non-prod.
+    register: delete
+    loop: "{{ input.raw_data }}"
+
+  - name: pause
+    pause:
+      minutes: 1
